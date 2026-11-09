@@ -73,3 +73,20 @@ yarn-error.log
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+# Secrets and local settings
+.env
+.env.*
+*.keystore
+*.jks
+
+# Firebase config (each developer downloads their own)
+android/app/google-services.json
+ios/GoogleService-Info.plist
+
+# Logs and crash dumps
+hs_err_pid*.log
+firebase-log.txt
+android/firebase-dependencies.txt
+
+# Screenshots saved in the project root
+/*.png

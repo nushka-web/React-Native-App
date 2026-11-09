@@ -1,4 +1,4 @@
-package com.authflow
+package com.arthumai.app
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate

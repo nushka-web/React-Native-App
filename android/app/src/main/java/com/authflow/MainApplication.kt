@@ -1,4 +1,4 @@
-package com.authflow
+package com.arthumai.app
 
 import android.app.Application
 import com.facebook.react.PackageList
