@@ -22,6 +22,10 @@ import EducationView from './EducationView';
 import MyAIView from './MyAIView';
 import GenerateView from './GenerateView';
 import arthumWordmark from '../../assets/images/arthum-wordmark.png';
+import instagramLogo from '../../assets/images/social-instagram.png';
+import youtubeLogo from '../../assets/images/social-youtube.png';
+import spotifyLogo from '../../assets/images/social-spotify.png';
+import facebookLogo from '../../assets/images/social-facebook.png';
 import { setUnauthorizedHandler } from '../../services/api';
 import {
   subscribeToNotifications,
@@ -69,6 +73,13 @@ const CAN_DO_TILES = [
   { icon: '📊', title: 'Track Progress', desc: 'Scores, performance, weak areas' },
   { icon: '🤖', title: 'AI Study Assistant', desc: 'Ask doubts, get instant explanations' },
   { icon: '📅', title: 'Study Planner', desc: 'Organize subjects and study goals' },
+];
+
+const SOCIAL_LINKS = [
+  { key: 'instagram', label: 'Instagram', logo: instagramLogo, url: 'https://www.instagram.com/arthum_ai?vrfl=MWVoYXd4dGJodzZsaw==' },
+  { key: 'youtube', label: 'YouTube', logo: youtubeLogo, url: 'https://youtube.com/@arthumai?si=gvBhfxThyRCDKB8O' },
+  { key: 'spotify', label: 'Spotify', logo: spotifyLogo, url: 'https://open.spotify.com/show/7JnuMKKoSQg6dF10horWNq' },
+  { key: 'facebook', label: 'Facebook', logo: facebookLogo, url: 'https://www.facebook.com/share/r/1FtnL2dUxY/' },
 ];
 
 type MenuEntry =
@@ -510,6 +521,12 @@ function StudentHomeScreen({ navigation }: Props) {
     }
   };
 
+  const openSocial = (url: string, label: string) => {
+    Linking.openURL(url).catch(() => {
+      Alert.alert('Unable to open', `${label} could not be opened.`);
+    });
+  };
+
   const renderHome = () => (
     <ScrollView
       contentContainerStyle={styles.homeContent}
@@ -575,6 +592,20 @@ function StudentHomeScreen({ navigation }: Props) {
       </View>
 
       {items.length === 0 ? newsStatus() : items.slice(0, 2).map(renderCard)}
+
+      <Text style={styles.sectionLabel}>FOLLOW US</Text>
+      <View style={styles.socialRow}>
+        {SOCIAL_LINKS.map(link => (
+          <Pressable
+            key={link.key}
+            style={styles.socialButton}
+            onPress={() => openSocial(link.url, link.label)}
+            accessibilityRole="link"
+            accessibilityLabel={`Open Arthum AI on ${link.label}`}>
+            <Image source={link.logo} style={styles.socialLogo} resizeMode="contain" />
+          </Pressable>
+        ))}
+      </View>
     </ScrollView>
   );
 
@@ -877,6 +908,20 @@ const styles = StyleSheet.create({
   },
   sectionHeading: { fontSize: 16, fontWeight: '800', color: '#16142F' },
   seeAll: { fontSize: 13, fontWeight: '700', color: '#5566EB' },
+
+  // Social links
+  socialRow: { flexDirection: 'row', justifyContent: 'center', gap: 16 },
+  socialButton: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E5E6F2',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  socialLogo: { width: 28, height: 28 },
 
   // News page
   newsHeader: { alignItems: 'center', paddingTop: 14, paddingBottom: 18, paddingHorizontal: 6 },
