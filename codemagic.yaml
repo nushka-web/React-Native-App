@@ -1,3 +1,4 @@
+
 workflows:
   arthum-ios-simulator:
     name: Arthum AI - iOS Simulator
@@ -8,11 +9,15 @@ workflows:
       vars:
         XCODE_WORKSPACE: "AuthFlow.xcworkspace"
         XCODE_SCHEME: "AuthFlow"
+      node: 22
+      xcode: latest
 
     scripts:
       - name: Install Node dependencies
         script: |
-          npm install
+          export NODE_ENV=development
+          export npm_config_production=false
+          npm ci --include=dev
 
       - name: Install CocoaPods dependencies
         script: |
