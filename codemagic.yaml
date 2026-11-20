@@ -31,26 +31,37 @@ workflows:
           xcodebuild \
             -workspace "ios/$XCODE_WORKSPACE" \
             -scheme "$XCODE_SCHEME" \
-            -configuration Debug \
+            -configuration Release \
             -sdk iphonesimulator \
             -destination 'generic/platform=iOS Simulator' \
             -derivedDataPath "$CM_BUILD_DIR/build/ios" \
             CODE_SIGNING_ALLOWED=NO \
             build
 
-      - name: Package Simulator app
+      - name: Verify JavaScript bundle
         script: |
-          APP_PATH=$(find "$CM_BUILD_DIR/build/ios/Build/Products/Debug-iphonesimulator" \
-            -maxdepth 1 -name "*.app" -print -quit)
+          APP_PATH="$CM_BUILD_DIR/build/ios/Build/Products/Release-iphonesimulator/AuthFlow.app"
 
-          if [ -z "$APP_PATH" ]; then
+          if [ ! -d "$APP_PATH" ]; then
             echo "Simulator app not found"
             exit 1
           fi
 
+          if [ ! -f "$APP_PATH/main.jsbundle" ]; then
+            echo "ERROR: main.jsbundle is missing"
+            find "$APP_PATH" -name "*.jsbundle"
+            exit 1
+          fi
+
+          echo "SUCCESS: main.jsbundle found"
+
+      - name: Package Simulator app
+        script: |
+          APP_PATH="$CM_BUILD_DIR/build/ios/Build/Products/Release-iphonesimulator/AuthFlow.app"
+
           mkdir -p "$CM_BUILD_DIR/artifacts"
           cd "$(dirname "$APP_PATH")"
-          zip -r "$CM_BUILD_DIR/artifacts/ArthumAI-Simulator.zip" "$(basename "$APP_PATH")"
+          zip -r "$CM_BUILD_DIR/artifacts/ArthumAI-Simulator.zip" AuthFlow.app
 
     artifacts:
       - artifacts/ArthumAI-Simulator.zip
