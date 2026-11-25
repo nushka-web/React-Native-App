@@ -13,7 +13,11 @@ type Props = NativeStackScreenProps<RootStackParamList, 'EmailVerification'>;
 const RESEND_COOLDOWN_SECONDS = 30;
 
 function EmailVerificationScreen({ navigation, route }: Props) {
-  const { email } = route.params;
+  const { email, parentEmail } = route.params as {
+    email: string;
+    parentEmail?: string;
+  };
+  const isMinor = !!parentEmail;
 
   const [resending, setResending] = useState(false);
   const [cooldown, setCooldown] = useState(0);
@@ -37,7 +41,7 @@ function EmailVerificationScreen({ navigation, route }: Props) {
     setResending(true);
     try {
       const response = await resendVerificationEmail(email);
-      setMessage(response.toastMessage || response.message || 'Verification email sent.');
+      setMessage(response.toastMessage || response.message || (isMinor ? 'Approval email sent.' : 'Verification email sent.'));
       setCooldown(RESEND_COOLDOWN_SECONDS);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not resend the email. Please try again.');
@@ -55,16 +59,28 @@ function EmailVerificationScreen({ navigation, route }: Props) {
           <Image source={arthumWordmark} resizeMode="contain" style={s.wordmark} accessibilityLabel="Arthum AI" />
         </View>
 
-        <View style={s.header}>
-          <Text style={s.title}>Verify your email</Text>
-          <Text style={s.subtitle}>
-            We sent a verification link to
-          </Text>
-          <Text style={s.email}>{email}</Text>
-          <Text style={s.subtitle}>
-            Open the link in that email, then come back here to sign in. The link expires after a while, so verify soon.
-          </Text>
-        </View>
+        {isMinor ? (
+          <View style={s.header}>
+            <Text style={s.title}>Parent / guardian approval needed</Text>
+            <Text style={s.subtitle}>Because you are under 18, we sent an approval link to your parent or guardian at</Text>
+            <Text style={s.email}>{parentEmail}</Text>
+            <Text style={s.subtitle}>
+              Ask them to open the email and approve your registration. That also verifies your account. Once they
+              approve, come back here to sign in. We have not sent anything to your own email address.
+            </Text>
+          </View>
+        ) : (
+          <View style={s.header}>
+            <Text style={s.title}>Verify your email</Text>
+            <Text style={s.subtitle}>
+              We sent a verification link to
+            </Text>
+            <Text style={s.email}>{email}</Text>
+            <Text style={s.subtitle}>
+              Open the link in that email, then come back here to sign in. The link expires after a while, so verify soon.
+            </Text>
+          </View>
+        )}
 
         {!!message && <Text style={s.success}>{message}</Text>}
         {!!error && <Text style={s.error}>{error}</Text>}
@@ -82,7 +98,9 @@ function EmailVerificationScreen({ navigation, route }: Props) {
               ? 'Sending...'
               : cooldown > 0
                 ? `Resend email in ${cooldown}s`
-                : 'Resend verification email'}
+                : isMinor
+                  ? 'Resend approval email to parent'
+                  : 'Resend verification email'}
           </Text>
         </Pressable>
       </ScrollView>

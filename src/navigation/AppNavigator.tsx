@@ -6,28 +6,34 @@ import RegisterScreen from '../screens/auth/RegisterScreen';
 import ResetPasswordScreen from '../screens/auth/ResetPasswordScreen';
 import EmailVerificationScreen from '../screens/auth/EmailVerificationScreen';
 import StudentHomeScreen from '../screens/home/StudentHomeScreen';
-import { getSession } from '../services/session';
+import TryAiScreen from '../screens/tryai/TryAiScreen';
 
 export type RootStackParamList = {
   Welcome: undefined;
   Login: undefined;
   Register: undefined;
   ResetPassword: undefined;
-  EmailVerification: { email: string };
+  EmailVerification: { email: string; parentEmail?: string };
   StudentHome: undefined;
+  // Opened from a shared link such as arthumai://try?input=...&utm_source=instagram
+  TryAi:
+    | {
+        input?: string;
+        utm_source?: string;
+        utm_medium?: string;
+        utm_campaign?: string;
+        utm_content?: string;
+        utm_term?: string;
+      }
+    | undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 function AppNavigator() {
-  // A student who is already logged in (saved on the phone) opens straight to the home screen.
-  const session = getSession();
-  const initialRoute: keyof RootStackParamList =
-    session.token && session.user?.category === 'Student' ? 'StudentHome' : 'Welcome';
-
   return (
     <Stack.Navigator
-      initialRouteName={initialRoute}
+      initialRouteName="Welcome"
       screenOptions={{
         headerShown: false,
       }}
@@ -48,6 +54,7 @@ function AppNavigator() {
         component={StudentHomeScreen}
         options={{ gestureEnabled: false }}
       />
+      <Stack.Screen name="TryAi" component={TryAiScreen} />
     </Stack.Navigator>
   );
 }

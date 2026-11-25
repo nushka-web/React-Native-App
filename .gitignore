@@ -90,3 +90,20 @@ android/firebase-dependencies.txt
 
 # Screenshots saved in the project root
 /*.png
+*.keystore
+*.jks
+
+# Web app local files
+web/.env.local
+web/node_modules/
+
+# Firebase configuration
+ios/AuthFlow/GoogleService-Info.plist
+
+# Archives
+src.zip
+
+# Never commit Android signing keys
+android/app/arthum-upload-key.keystore
+android/app/debug.keystore
+android/gradle.properties

@@ -35,6 +35,7 @@ import { clearSession, getSession } from '../../services/session';
 import ReportsView from './reports/ReportsView';
 import ConversionView from './conversion/ConversionView';
 import AboutUsView from './about/AboutUsView';
+import AccountDeletionView from './AccountDeletionView';
 import {
   fetchNewsPage,
   fetchNewsSubscription,
@@ -56,6 +57,7 @@ type View_ =
   | { name: 'home' }
   | { name: 'news' }
   | { name: 'profile' }
+  | { name: 'accountDeletion' }
   | { name: 'education' }
   | { name: 'myai' }
   | { name: 'generate' }
@@ -83,7 +85,7 @@ const SOCIAL_LINKS = [
 ];
 
 type MenuEntry =
-  | { kind: 'item'; label: string; sub?: string; target: View_ | 'logout' }
+  | { kind: 'item'; label: string; sub?: string; target: View_ | 'logout' | 'privacy' }
   | { kind: 'divider' };
 
 const MENU: MenuEntry[] = [
@@ -96,6 +98,7 @@ const MENU: MenuEntry[] = [
   { kind: 'item', label: 'Reports', sub: 'Balance Report · Balance History · Transaction History', target: { name: 'reports' } },
   { kind: 'item', label: 'News', target: { name: 'news' } },
   { kind: 'item', label: 'About Us', target: { name: 'about' } },
+  { kind: 'item', label: 'Privacy', target: 'privacy' },
   { kind: 'divider' },
   { kind: 'item', label: 'My AI', target: { name: 'myai' } },
   { kind: 'item', label: 'Profile', target: { name: 'profile' } },
@@ -293,9 +296,17 @@ function StudentHomeScreen({ navigation }: Props) {
     return () => setUnauthorizedHandler(null);
   }, [navigation]);
 
-  const onMenuItem = (target: View_ | 'logout') => {
+  const onMenuItem = (target: View_ | 'logout' | 'privacy') => {
     if (target === 'logout') {
       handleLogout();
+    } else if (target === 'privacy') {
+      setMenuOpen(false);
+      Linking.openURL('https://www.arthumai.com/privacy-policy').catch(() => {
+        Alert.alert(
+          'Unable to open',
+          'Privacy Policy could not be opened. Please try again.',
+        );
+      });
     } else {
       goTo(target);
     }
@@ -670,6 +681,14 @@ function StudentHomeScreen({ navigation }: Props) {
         <Pressable style={styles.logoutButton} onPress={handleLogout} accessibilityRole="button">
           <Text style={styles.logoutText}>Log out</Text>
         </Pressable>
+
+        <Pressable
+          style={styles.deleteAccountButton}
+          onPress={() => goTo({ name: 'accountDeletion' })}
+          accessibilityRole="button"
+          accessibilityLabel="Delete account">
+          <Text style={styles.deleteAccountText}>Delete Account</Text>
+        </Pressable>
       </View>
     </ScrollView>
   );
@@ -715,6 +734,9 @@ function StudentHomeScreen({ navigation }: Props) {
         {view.name === 'home' && renderHome()}
         {view.name === 'news' && renderNews()}
         {view.name === 'profile' && renderProfile()}
+        {view.name === 'accountDeletion' && (
+          <AccountDeletionView initialEmail={user?.email ?? ''} onBack={() => goTo({ name: 'profile' })} />
+        )}
         {view.name === 'education' && <EducationView token={getSession().token ?? ''} />}
         {view.name === 'myai' && <MyAIView userEmail={user?.email ?? ''} token={getSession().token ?? ''} />}
         {view.name === 'generate' && <GenerateView />}
@@ -1080,6 +1102,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   logoutText: { color: '#D14B5A', fontSize: 15, fontWeight: '700' },
+  deleteAccountButton: {
+    alignSelf: 'stretch',
+    marginTop: 12,
+    height: 46,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  deleteAccountText: { color: '#8A8FA8', fontSize: 14, fontWeight: '600', textDecorationLine: 'underline' },
 
   // Bottom bar
   bottomBar: {

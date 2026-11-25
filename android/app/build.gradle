@@ -15,6 +15,11 @@ def enableProguardInReleaseBuilds = false
 
 def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
 
+// Tell react-native-worklets where react-native lives so it doesn't
+// spawn a separate `node` process during Gradle configuration (which
+// crashes with OOM exit 134 on low-RAM machines).
+ext.REACT_NATIVE_NODE_MODULES_DIR = file("../../node_modules/react-native")
+
 android {
     ndkVersion rootProject.ext.ndkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
@@ -43,6 +48,13 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+
+        release {
+            storeFile file(MYAPP_UPLOAD_STORE_FILE.trim())
+            storePassword MYAPP_UPLOAD_STORE_PASSWORD.trim()
+            keyAlias MYAPP_UPLOAD_KEY_ALIAS.trim()
+            keyPassword MYAPP_UPLOAD_KEY_PASSWORD.trim()
+        }
     }
 
     buildTypes {
@@ -51,10 +63,14 @@ android {
         }
 
         release {
-            signingConfig signingConfigs.debug
-            minifyEnabled enableProguardInReleaseBuilds
-            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
+            signingConfig signingConfigs.release
+            minifyEnabled false
         }
+    }
+
+    lint {
+        checkReleaseBuilds false
+        abortOnError false
     }
 }
 

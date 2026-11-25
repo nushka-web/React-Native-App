@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-	<string>AuthFlow</string>
+	<string>Arthum AI</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -55,5 +55,13 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
+	<key>NSCameraUsageDescription</key>
+<string>Arthum AI needs camera access to let you capture photos and upload documents.</string>
+
+<key>NSMicrophoneUsageDescription</key>
+<string>Arthum AI needs microphone access to let you record audio.</string>
+
+<key>NSPhotoLibraryUsageDescription</key>
+<string>Arthum AI needs photo library access to let you select and upload images.</string>
 </dict>
 </plist>

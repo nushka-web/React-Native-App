@@ -1,3 +1,4 @@
+
 import {
   Image,
   KeyboardAvoidingView,
@@ -12,7 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import type { RootStackParamList } from '../../navigation/AppNavigator';
-import arthumWordmark from '../../assets/images/arthum-wordmark.jpeg';
+import arthumWordmark from '../../assets/images/arthum-wordmark.png';
 import PrimaryButton from '../../components/common/PrimaryButton';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ResetPassword'>;
@@ -68,7 +69,7 @@ function ResetPasswordScreen({ navigation }: Props) {
               <PrimaryButton
                 className="mt-6"
                 title="Send Reset Link"
-                onPress={() => { }}
+                onPress={() => {}}
               />
             </View>
 

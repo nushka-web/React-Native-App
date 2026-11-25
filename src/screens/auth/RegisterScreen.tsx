@@ -86,6 +86,37 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/;
 const PARENT_MOBILE_REGEX = /^[6-9]\d{9}$/;
 
+// The student's age in years from a "mm/dd/yyyy" date of birth.
+// Returns null when the date is missing, not a real date, or in the future.
+function getAgeFromDob(dob: string): number | null {
+  const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec((dob || '').trim());
+  if (!match) {
+    return null;
+  }
+  const month = Number(match[1]);
+  const day = Number(match[2]);
+  const year = Number(match[3]);
+
+  const birth = new Date(year, month - 1, day);
+  if (birth.getFullYear() !== year || birth.getMonth() !== month - 1 || birth.getDate() !== day) {
+    return null;
+  }
+
+  const today = new Date();
+  const todayYear = today.getFullYear();
+  const todayMonth = today.getMonth() + 1;
+  const todayDay = today.getDate();
+
+  const inFuture =
+    year > todayYear ||
+    (year === todayYear && (month > todayMonth || (month === todayMonth && day > todayDay)));
+  if (inFuture) {
+    return null;
+  }
+
+  return todayYear - year - (todayMonth < month || (todayMonth === month && todayDay < day) ? 1 : 0);
+}
+
 const ACADEMIC_PATTERN_OPTIONS = ['Term', 'Semester', 'Annual'];
 const TERMS_COMPLETED_OPTIONS = ['0', '1', '2', '3'];
 const SEMESTERS_COMPLETED_OPTIONS = ['0', '1', '2'];
@@ -1437,7 +1468,10 @@ function RegisterScreen({ navigation }: Props) {
     try {
       await registerUser(payload);
       // Registration succeeded: ask the user to verify their email before logging in.
-      navigation.replace('EmailVerification', { email: email.trim().toLowerCase() });
+      navigation.replace('EmailVerification', {
+        email: email.trim().toLowerCase(),
+        parentEmail: parentRequired ? parentEmail.trim().toLowerCase() : undefined,
+      });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Registration failed. Please try again.';
       setSubmitError(message);
@@ -1545,14 +1579,35 @@ function RegisterScreen({ navigation }: Props) {
     parentAttempted && parentMobile && !PARENT_MOBILE_REGEX.test(parentMobile)
       ? 'Enter a valid 10-digit mobile number starting with 6, 7, 8 or 9.'
       : '';
-  const parentEmailError =
-    parentAttempted && parentEmail.trim() && !EMAIL_REGEX.test(parentEmail.trim())
-      ? 'Please enter a valid email address.'
+  // A student under 18 must give a parent / guardian name, relationship and email.
+  const studentAge = getAgeFromDob(dateOfBirth);
+  const parentRequired = studentAge !== null && studentAge < 18;
+
+  const parentNameError =
+    parentAttempted && parentRequired && !parentName.trim()
+      ? 'Parent / guardian name is required for students under 18.'
       : '';
+  const parentRelationshipError =
+    parentAttempted && parentRequired && !parentRelationship
+      ? 'Relationship is required for students under 18.'
+      : '';
+  const parentEmailError = (() => {
+    if (!parentAttempted) {
+      return '';
+    }
+    if (parentRequired && !parentEmail.trim()) {
+      return 'Parent / guardian email is required for students under 18.';
+    }
+    if (parentEmail.trim() && !EMAIL_REGEX.test(parentEmail.trim())) {
+      return 'Please enter a valid email address.';
+    }
+    return '';
+  })();
 
   const handleParentNext = () => {
     setParentAttempted(true);
     if (
+      (parentRequired && (!parentName.trim() || !parentRelationship || !parentEmail.trim())) ||
       (parentMobile && !PARENT_MOBILE_REGEX.test(parentMobile)) ||
       (parentEmail.trim() && !EMAIL_REGEX.test(parentEmail.trim()))
     ) {
@@ -1562,6 +1617,10 @@ function RegisterScreen({ navigation }: Props) {
   };
 
   const handleParentSkip = () => {
+    // Students under 18 cannot skip this step.
+    if (parentRequired) {
+      return;
+    }
     setParentName('');
     setParentMobile('');
     setParentEmail('');
@@ -1596,6 +1655,16 @@ function RegisterScreen({ navigation }: Props) {
 
     if (isSeniorClass && !stream) {
       setEducationError('Please select a stream for Class 11 or 12.');
+      return;
+    }
+
+    if (!dateOfBirth) {
+      setEducationError("Please select the student's date of birth.");
+      return;
+    }
+
+    if (getAgeFromDob(dateOfBirth) === null) {
+      setEducationError('Please select a valid date of birth. It cannot be in the future.');
       return;
     }
 
@@ -2947,7 +3016,7 @@ function RegisterScreen({ navigation }: Props) {
                   </View>
                 </View>
 
-                <Field label="Date of Birth">
+                <Field label="Date of Birth" required>
                   <Pressable
                     style={s.dateInput}
                     onPress={() => setShowDatePicker(true)}
@@ -3000,7 +3069,7 @@ function RegisterScreen({ navigation }: Props) {
                     <Text style={s.educationInfoIconText}>i</Text>
                   </View>
                   <Text style={s.educationInfoText}>
-                    Board and Class are required. You can add the remaining education details later.
+                    Board, Class and Date of Birth are required. You can add the remaining education details later.
                   </Text>
                 </View>
 
@@ -3023,14 +3092,15 @@ function RegisterScreen({ navigation }: Props) {
                   <Text style={s.pageTitle}>Parent Information</Text>
                 </View>
 
-                <Field label="Parent / Guardian Name">
+                <Field label="Parent / Guardian Name" required={parentRequired}>
                   <Input
                     value={parentName}
                     onChangeText={setParentName}
-                    placeholder="Enter parent name (optional)"
+                    placeholder={parentRequired ? 'Enter parent name' : 'Enter parent name (optional)'}
                     autoCapitalize="words"
                     autoCorrect={false}
                   />
+                  {!!parentNameError && <Text style={s.errorText}>{parentNameError}</Text>}
                 </Field>
 
                 <Field label="Parent Mobile Number">
@@ -3044,11 +3114,11 @@ function RegisterScreen({ navigation }: Props) {
                   {!!parentMobileError && <Text style={s.errorText}>{parentMobileError}</Text>}
                 </Field>
 
-                <Field label="Parent Email">
+                <Field label="Parent Email" required={parentRequired}>
                   <Input
                     value={parentEmail}
                     onChangeText={setParentEmail}
-                    placeholder="parent@example.com (optional)"
+                    placeholder={parentRequired ? 'parent@example.com' : 'parent@example.com (optional)'}
                     keyboardType="email-address"
                     autoCapitalize="none"
                     autoCorrect={false}
@@ -3057,19 +3127,22 @@ function RegisterScreen({ navigation }: Props) {
                 </Field>
 
                 <PreferenceDropdown
-                  label="Relationship"
+                  label={parentRequired ? 'Relationship *' : 'Relationship'}
                   value={parentRelationship}
                   options={PARENT_RELATIONSHIPS}
                   placeholder="Select Relationship"
                   onSelect={setParentRelationship}
                 />
+                {!!parentRelationshipError && <Text style={s.errorText}>{parentRelationshipError}</Text>}
 
                 <View style={s.parentInfoBox}>
                   <View style={s.educationInfoIcon}>
                     <Text style={s.educationInfoIconText}>i</Text>
                   </View>
                   <Text style={s.educationInfoText}>
-                    All fields on this page are optional. If you fill in a mobile number or email, it must be valid.
+                    {parentRequired
+                      ? 'The student is under 18, so the parent / guardian name, relationship and email are required. The mobile number is optional.'
+                      : 'All fields on this page are optional. If you fill in a mobile number or email, it must be valid.'}
                   </Text>
                 </View>
 
@@ -3082,13 +3155,15 @@ function RegisterScreen({ navigation }: Props) {
                     <Text style={s.previousButtonText}>Previous</Text>
                   </Pressable>
 
-                  <Pressable
-                    style={s.skipButton}
-                    onPress={handleParentSkip}
-                    accessibilityRole="button"
-                  >
-                    <Text style={s.skipButtonText}>Skip for Now</Text>
-                  </Pressable>
+                  {!parentRequired && (
+                    <Pressable
+                      style={s.skipButton}
+                      onPress={handleParentSkip}
+                      accessibilityRole="button"
+                    >
+                      <Text style={s.skipButtonText}>Skip for Now</Text>
+                    </Pressable>
+                  )}
 
                   <View style={s.parentNextButton}>
                     <PrimaryButton
